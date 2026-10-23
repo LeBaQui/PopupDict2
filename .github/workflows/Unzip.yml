@@ -1,0 +1,45 @@
+name: Unzip Apk_appv2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unzip và bỏ folder bọc ngoài
+        run: |
+          set -e
+          ZIP="Popup_dict.zip"
+
+          rm -rf /tmp/unz
+          mkdir /tmp/unz
+          unzip -q "$ZIP" -d /tmp/unz
+
+          # Nếu top-level chỉ có đúng 1 folder (folder bọc) thì chui vào trong nó
+          SRC=/tmp/unz
+          if [ "$(ls -A /tmp/unz | wc -l)" -eq 1 ] && [ -d "$(ls -d /tmp/unz/* | head -n1)" ]; then
+            SRC="$(ls -d /tmp/unz/* | head -n1)"
+          fi
+
+          echo "Nguồn copy: $SRC"
+
+          # Copy toàn bộ nội dung (kể cả file ẩn) ra thư mục gốc của repo
+          rsync -a --exclude='.git/' --exclude='.github/workflows/' "$SRC"/ ./
+
+          # Xóa file zip sau khi giải nén
+          rm -f "$ZIP"
+
+      - name: Commit và push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Unzip Popup_dict.zip" || echo "Không có thay đổi để commit"
+          git push
