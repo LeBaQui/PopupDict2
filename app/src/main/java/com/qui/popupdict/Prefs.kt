@@ -40,9 +40,12 @@ Chia đoạn tiếng Anh sau thành các cụm nghĩa ngắn. Mỗi cụm một 
 
     private fun sp(c: Context) = c.getSharedPreferences("cfg", Context.MODE_PRIVATE)
 
-    fun key(c: Context): String = sp(c).getString("key", "") ?: ""
-    fun model(c: Context): String = sp(c).getString("model", "gemini-3.5-flash-lite") ?: "gemini-3.5-flash-lite"
-    fun think(c: Context): String = sp(c).getString("think", "") ?: ""
+    // Dùng tên khóa MỚI (groq...) để không dính API key / model Gemini cũ đã lưu trong máy
+    const val DEFAULT_MODEL = "openai/gpt-oss-20b"
+
+    fun key(c: Context): String = sp(c).getString("groqKey", "") ?: ""
+    fun model(c: Context): String = sp(c).getString("groqModel", DEFAULT_MODEL) ?: DEFAULT_MODEL
+    fun think(c: Context): String = sp(c).getString("groqThink", "") ?: ""
 
     fun rawWordPrompts(c: Context): String = sp(c).getString("wordPrompts", DEFAULT_WORD_PROMPTS) ?: DEFAULT_WORD_PROMPTS
     fun rawSentPrompts(c: Context): String = sp(c).getString("sentPrompts", DEFAULT_SENT_PROMPTS) ?: DEFAULT_SENT_PROMPTS
@@ -57,14 +60,14 @@ Chia đoạn tiếng Anh sau thành các cụm nghĩa ngắn. Mỗi cụm một 
 
     // Chỉ lưu riêng model (dùng khi chọn model từ danh sách)
     fun setModel(c: Context, model: String) {
-        sp(c).edit().putString("model", model).apply()
+        sp(c).edit().putString("groqModel", model).apply()
     }
 
     fun save(c: Context, key: String, model: String, think: String, wordPrompts: String, sentPrompts: String) {
         sp(c).edit()
-            .putString("key", key)
-            .putString("model", model)
-            .putString("think", think)
+            .putString("groqKey", key)
+            .putString("groqModel", model)
+            .putString("groqThink", think)
             .putString("wordPrompts", wordPrompts)
             .putString("sentPrompts", sentPrompts)
             .apply()
