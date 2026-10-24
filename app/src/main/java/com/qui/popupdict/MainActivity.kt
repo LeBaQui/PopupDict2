@@ -13,9 +13,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.text.Editable
 import android.text.InputType
-import android.text.TextWatcher
 import android.view.Gravity
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -42,10 +40,8 @@ class MainActivity : Activity() {
     private lateinit var wordEt: EditText
     private lateinit var sentEt: EditText
 
-    private val gemmaLevels = listOf("" to "Thinking: mặc định", "MINIMAL" to "Minimal", "HIGH" to "High")
-    private val geminiLevels = listOf("" to "Thinking: mặc định", "LOW" to "Low", "MEDIUM" to "Medium", "HIGH" to "High")
-    private var levels = geminiLevels
-    private var isGemma = false
+    // Mức reasoning của Groq (chỉ model gpt-oss mới nhận tham số này)
+    private val levels = listOf("" to "Reasoning: mặc định", "low" to "Low", "medium" to "Medium", "high" to "High")
 
     private val h = Handler(Looper.getMainLooper())
     private val tick = object : Runnable {
@@ -66,7 +62,7 @@ class MainActivity : Activity() {
         sv.addView(col)
 
         col.addView(TextView(this).apply {
-            text = "Popup Dict — chạm từ, Gemini dịch"
+            text = "Popup Dict — chạm từ, Groq dịch"
             textSize = 20f
         })
 
@@ -95,7 +91,7 @@ class MainActivity : Activity() {
         })
 
         col.addView(label("API key"))
-        keyEt = edit("API key Google AI Studio", Prefs.key(this))
+        keyEt = edit("API key Groq (console.groq.com/keys)", Prefs.key(this))
         keyEt.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         col.addView(keyEt)
 
@@ -108,19 +104,7 @@ class MainActivity : Activity() {
 
         thinkSp = Spinner(this)
         col.addView(thinkSp)
-        isGemma = Prefs.model(this).trim().lowercase().startsWith("gemma")
         refreshLevels(Prefs.think(this))
-        modelEt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val g = (s?.toString() ?: "").trim().lowercase().startsWith("gemma")
-                if (g != isGemma) {
-                    isGemma = g
-                    refreshLevels("")
-                }
-            }
-        })
 
         col.addView(label(
             "Prompt khi CHẠM 1 TỪ. Dùng {text} = từ được chạm, {context} = câu chứa từ. " +
@@ -277,7 +261,6 @@ class MainActivity : Activity() {
     // ---------- thinking / lưu ----------
 
     private fun refreshLevels(keep: String) {
-        levels = if (isGemma) gemmaLevels else geminiLevels
         thinkSp.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, levels.map { it.second })
         val i = levels.indexOfFirst { it.first == keep }
         thinkSp.setSelection(if (i >= 0) i else 0)
